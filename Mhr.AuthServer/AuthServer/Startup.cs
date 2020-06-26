@@ -32,10 +32,6 @@ namespace Mhr.AuthServer
         {
             services.AddDbContext<MhrDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("MhrDBContext"), x => x.MigrationsAssembly("Mhr.Data")));
 
-            //services.AddSingleton<IUnitOfWork, UnitOfWork>();
-            //services.AddTransient<IMusicService, MusicService>();
-            //services.AddTransient<IArtistService, ArtistService>();
-
             services.AddIdentity<AppUser, IdentityRole>()
                 .AddEntityFrameworkStores<MhrDbContext>()
                 .AddDefaultTokenProviders();

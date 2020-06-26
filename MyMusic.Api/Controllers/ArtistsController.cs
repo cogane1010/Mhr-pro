@@ -3,18 +3,20 @@ using Mhr.Api.Validators;
 using Mhr.Api.ViewModels;
 using Mhr.Core.Models;
 using Mhr.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Mhr.Api.Controllers
 {
+    [Authorize(Policy = "ApiReader")]
     [Route("api/[controller]")]
-    [ApiController]
-    public class ArtistsController : ControllerBase
+    public class ArtistsController : Controller
     {
         private readonly IArtistService _artistService;
         private readonly IMapper _mapper;
+
 
         public ArtistsController(IArtistService artistService, IMapper mapper)
         {
@@ -23,7 +25,7 @@ namespace Mhr.Api.Controllers
         }
 
         [HttpGet("")]
-        public async Task<ActionResult<IEnumerable<ArtistResource>>> GetAllArtists()
+        public async Task<ActionResult<IEnumerable<ArtistResource>>> Get()
         {
             var artists = await _artistService.GetAllArtists();
             var artistResources = _mapper.Map<IEnumerable<Artist>, IEnumerable<ArtistResource>>(artists);

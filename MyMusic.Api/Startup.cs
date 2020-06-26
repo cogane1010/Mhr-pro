@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -16,6 +17,8 @@ namespace Mhr.Api
 {
     public class Startup
     {
+        private readonly string _myAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -26,9 +29,9 @@ namespace Mhr.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddDbContext<MhrDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("MhrDBContext"), x => x.MigrationsAssembly("Mhr.Data")));
 
-
-            services.AddScoped(provider => new MhrDbContext());
+            //services.AddScoped(provider => new MhrDbContext());
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddTransient<IMusicService, MusicService>();
@@ -48,20 +51,14 @@ namespace Mhr.Api
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("ApiReader", policy => policy.RequireClaim("scope", "api.read"));
-                options.AddPolicy("Consumer", policy => policy.RequireClaim(ClaimTypes.Role, "consumer"));
+                options.AddPolicy("admin", policy => policy.RequireClaim(ClaimTypes.Role, Roles.Admin));
+                options.AddPolicy("employee", policy => policy.RequireClaim(ClaimTypes.Role, Roles.Employee));
             });
 
             services.AddMvc(options =>
                 {
                     options.EnableEndpointRouting = false;
-                })
-                .SetCompatibilityVersion(CompatibilityVersion.Latest);
-            services.AddCors(options => options.AddPolicy("AllowAll", p => p.AllowAnyOrigin()
-                .AllowAnyMethod()
-                .AllowAnyHeader()));
-
-
-
+                }).SetCompatibilityVersion(CompatibilityVersion.Latest);
 
             services.AddSwaggerGen(options =>
             {
@@ -85,27 +82,18 @@ namespace Mhr.Api
                 app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
-
-            app.UseRouting();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
-
-            app.UseStaticFiles();
-            //app.UseCors("AllowAll");
-            //app.UseIdentityServer();
 
             app.UseCors(options => options.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
             app.UseAuthentication();
+
+            app.UseMvc();
+
 
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
                 c.RoutePrefix = "";
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "My Music V1");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Mhr Managerment");
             });
         }
     }
